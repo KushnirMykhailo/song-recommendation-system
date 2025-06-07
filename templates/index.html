@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyrics Recommendation App</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body { padding: 40px; background-color: #f8f9fa; }
+        textarea { width: 100%; height: 200px; font-size: 16px; }
+        table { background: #fff; }
+        th, td { vertical-align: top; }
+        .truncate-text {
+            max-height: 4.5em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">🎵 Lyrics Recommendation App</h1>
+
+        <form id="lyrics-form" class="mb-4">
+            <div class="mb-3">
+                <label for="lyrics" class="form-label">Enter song lyrics:</label>
+                <textarea class="form-control" id="lyrics" name="lyrics"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Get Recommendations</button>
+            <button type="button" class="btn btn-secondary" onclick="clearAllRecommendations()">Clear All</button>
+        </form>
+
+        <h4>Or fetch lyrics by title and artist</h4>
+        <div class="row mb-3">
+            <div class="col">
+                <input type="text" id="song-title" class="form-control" placeholder="Song title">
+            </div>
+            <div class="col">
+                <input type="text" id="song-artist" class="form-control" placeholder="Artist">
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-info" onclick="fetchLyrics()">Fetch Lyrics</button>
+            </div>
+        </div>
+
+        <h4>Or get lyrics from Spotify</h4>
+        <div class="row mb-3">
+            <div class="col-9">
+                <input type="text" id="spotify-url" class="form-control" placeholder="Paste Spotify track URL">
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-success" onclick="fetchFromSpotify()">Get Lyrics from Spotify</button>
+            </div>
+        </div>
+
+        <div id="stats" class="mb-3"></div>
+        <div id="probs"></div>
+        <div id="results"></div>
+        <div id="category-results"></div>
+    </div>
+
+    <!-- Bootstrap JS (for collapse/accordion) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let latestLyrics = "";
+
+        document.getElementById("lyrics-form").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            clearAllRecommendations();
+            const lyrics = document.getElementById("lyrics").value;
+            latestLyrics = lyrics;
+
+            const wordCount = lyrics.trim().split(/\s+/).length;
+            const charCount = lyrics.length;
+            const lineCount = lyrics.split(/\n+/).length;
+
+            document.getElementById("stats").innerHTML =
+                `<strong>Input Text Statistics:</strong><br>` +
+                `Words: ${wordCount}<br>` +
+                `Characters: ${charCount}<br>` +
+                `Lines: ${lineCount}`;
+
+            const response = await fetch("/recommend", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ lyrics })
+            });
+            const data = await response.json();
+
+            const inputProbs = data.input_probs;
+            let probsHtml = '<h2>Model Probabilities for Input Lyrics</h2><table class="table table-striped"><thead><tr><th>Category</th><th>Probability</th></tr></thead><tbody>';
+            const sortedKeys = Object.keys(inputProbs).sort((a, b) => inputProbs[b] - inputProbs[a]);
+            for (const key of sortedKeys) {
+                probsHtml += `<tr><td><a class="category-link" onclick="handleCategoryClick('${key}')">${key}</a></td><td>${(inputProbs[key] * 100).toFixed(2)}%</td></tr>`;
+            }
+            probsHtml += '</tbody></table>';
+            document.getElementById("probs").innerHTML = probsHtml;
+
+            displayRecommendations(data.recommendations, "results", "Recommended Songs");
+        });
+
+        async function handleCategoryClick(category) {
+            clearAllRecommendations();
+            const response = await fetch("/recommend-category", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ lyrics: latestLyrics, category })
+            });
+            const data = await response.json();
+            displayRecommendations(data.recommendations, "category-results", `Recommendations Focused on "${category}"`);
+        }
+
+        function displayRecommendations(recs, containerId, title) {
+            let html = `<h2>${title}</h2><table class="table table-bordered"><thead><tr>`;
+            const fixedOrder = ["artist", "title", "lyrics", "similarity"];
+            const allKeys = Object.keys(recs[0]);
+            const dropKeys = ["language", "tag", "song"];
+            const extraKeys = allKeys.filter(k => !fixedOrder.includes(k) && !dropKeys.includes(k));
+            extraKeys.sort((a, b) => recs[0][b] - recs[0][a]);
+            const finalKeys = [...fixedOrder, ...extraKeys];
+
+            for (const key of finalKeys) {
+                html += `<th>${key}</th>`;
+            }
+            html += `</tr></thead><tbody>`;
+
+            for (let i = 0; i < recs.length; i++) {
+                const row = recs[i];
+                html += '<tr>';
+                for (const key of finalKeys) {
+                    if (key === "lyrics") {
+    const collapseId = `lyrics-${containerId}-${i}`;
+html += `<td style="max-width: 600px; min-width: 300px; width: auto;">
+    <div class="d-flex flex-column align-items-center">
+        <button class="btn btn-sm btn-outline-primary mb-2" data-bs-toggle="collapse" data-bs-target="#${collapseId}">Toggle Lyrics</button>
+        <div id="${collapseId}" class="collapse w-100">
+            <pre style="white-space:pre-wrap; word-break:break-word; font-size: 0.95rem;">${(row[key] || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+        </div>
+    </div>
+</td>`;
+
+
+}
+ else {
+                        html += `<td>${row[key]}</td>`;
+                    }
+                }
+                html += '</tr>';
+            }
+
+            html += '</tbody></table>';
+            document.getElementById(containerId).innerHTML = html;
+        }
+
+        function clearAllRecommendations() {
+            document.getElementById("results").innerHTML = "";
+            document.getElementById("category-results").innerHTML = "";
+            document.getElementById("probs").innerHTML = "";
+        }
+
+        async function fetchLyrics() {
+            const title = document.getElementById("song-title").value.trim();
+            const artist = document.getElementById("song-artist").value.trim();
+            if (!title || !artist) {
+                alert("Please enter both title and artist.");
+                return;
+            }
+
+            const response = await fetch("/fetch-lyrics", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, artist })
+            });
+
+            const data = await response.json();
+            if (data.lyrics) {
+                document.getElementById("lyrics").value = data.lyrics;
+                document.getElementById("lyrics-form").dispatchEvent(new Event("submit"));
+            } else {
+                alert("Lyrics not found.");
+            }
+        }
+
+        async function fetchFromSpotify() {
+            const spotifyUrl = document.getElementById("spotify-url").value.trim();
+            if (!spotifyUrl.includes("spotify.com/track/")) {
+                alert("Invalid Spotify URL");
+                return;
+            }
+
+            const response = await fetch("/fetch-lyrics-from-spotify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ spotify_url: spotifyUrl })
+            });
+
+            const data = await response.json();
+            if (data.lyrics) {
+                document.getElementById("lyrics").value = data.lyrics;
+                document.getElementById("song-title").value = data.title;
+                document.getElementById("song-artist").value = data.artist;
+                document.getElementById("lyrics-form").dispatchEvent(new Event("submit"));
+            } else {
+                alert("Lyrics not found.");
+            }
+        }
+    </script>
+</body>
+</html>
