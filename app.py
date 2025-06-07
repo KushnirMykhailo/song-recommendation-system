@@ -10,9 +10,9 @@ import re
 import base64
 import requests
 
-SPOTIFY_CLIENT_ID = "7e0f7b23af0a49c7beb4ba05afc3ebe3"
-SPOTIFY_CLIENT_SECRET = "7b7208920dfa4534a0fe454af1634b48"
-genius = Genius("f_3XAMJErD37UPpF4JZcNiFbeNYiaSNGZcJUW4Rxhn9hGGQ_QguGjFPVwrnhFrZi", skip_non_songs=True, excluded_terms=["(Remix)", "(Live)"])
+SPOTIFY_CLIENT_ID = ""
+SPOTIFY_CLIENT_SECRET = ""
+genius = Genius("", skip_non_songs=True, excluded_terms=["(Remix)", "(Live)"])
 
 app = Flask(__name__)
 
